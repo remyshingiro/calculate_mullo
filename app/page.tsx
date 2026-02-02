@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-// @ts-expect-error - ignoring type check for simplicity
 import { stateTaxData } from '../data/stateTaxData';
 
 export default function Home() {
