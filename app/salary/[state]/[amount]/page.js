@@ -1,14 +1,20 @@
 export const runtime = 'edge';
+
 import { stateTaxData, commonWages } from '../../../../data/stateTaxData';
 import { notFound } from 'next/navigation';
 import ShareButton from '../../../../components/ShareButton';
 import PrintButton from '../../../../components/PrintButton';
 
-export async function generateMetadata({ params, searchParams }) {
+// FIX: Casting to any to prevent indexing errors in production
+const taxData = stateTaxData as any;
+
+export async function generateMetadata({ params, searchParams }: any) {
   const { state, amount } = await params;
   const { hours = '40', overtime = '0' } = await searchParams;
-  const stateInfo = stateTaxData[state];
+  const stateInfo = taxData[state];
+  
   if (!stateInfo) return { title: 'Calculator Not Found' };
+  
   const totalHours = parseFloat(hours) + parseFloat(overtime);
   return {
     title: `$${amount}/hr Paycheck Calculator - ${stateInfo.name} (${totalHours} hrs)`,
@@ -16,17 +22,7 @@ export async function generateMetadata({ params, searchParams }) {
   };
 }
 
-export async function generateStaticParams() {
-  const states = Object.keys(stateTaxData);
-  const wages = commonWages; 
-  const params = [];
-  states.forEach((state) => {
-    wages.forEach((amount) => { params.push({ state, amount }); });
-  });
-  return params;
-}
-
-export default async function SalaryPage({ params, searchParams }) {
+export default async function SalaryPage({ params, searchParams }: any) {
   const { state, amount } = await params;
   const resolvedSearchParams = await searchParams;
   
@@ -34,7 +30,7 @@ export default async function SalaryPage({ params, searchParams }) {
   const overtime = resolvedSearchParams?.overtime || '0';
   const deductions = resolvedSearchParams?.deductions || '0';
   const status = resolvedSearchParams?.status || 'single';
-  const stateInfo = stateTaxData[state];
+  const stateInfo = taxData[state];
 
   if (!stateInfo) return notFound();
 
@@ -59,7 +55,7 @@ export default async function SalaryPage({ params, searchParams }) {
   const totalTax = federalTax + stateTax + ficaTax;
   const netYearly = grossYearly - totalTax - annualDeductions;
   const totalDeductionsAndTax = totalTax + annualDeductions;
-  const taxPercent = (totalDeductionsAndTax / grossYearly) * 100;
+  const taxPercent = grossYearly > 0 ? (totalDeductionsAndTax / grossYearly) * 100 : 0;
   const keepPercent = Math.max(0, 100 - taxPercent);
   const netMonthly = netYearly / 12;
   const netBiWeekly = netYearly / 26;
@@ -85,17 +81,12 @@ export default async function SalaryPage({ params, searchParams }) {
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="max-w-6xl mx-auto">
         
-        {/* AD SLOT 1: TOP BANNER */}
-        <div className="ad-space w-full h-24 bg-slate-200 dark:bg-slate-800 rounded-xl mb-8 flex items-center justify-center border border-slate-300 dark:border-slate-700 border-dashed">
-            <span className="text-slate-400 font-bold text-sm uppercase tracking-widest">Ad Space (Top Banner)</span>
-        </div>
-
         {/* Navigation Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
             <div className="flex items-center gap-3">
                 <a href="/" className="edit-inputs-link inline-flex items-center text-sm font-bold text-slate-500 dark:text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 mr-2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                    Edit
+                    Edit Inputs
                 </a>
                 <div className="share-btn"><ShareButton /></div>
                 <div className="share-btn"><PrintButton /></div>
@@ -115,7 +106,7 @@ export default async function SalaryPage({ params, searchParams }) {
                     <div className="text-center md:text-left w-full">
                         <p className="text-slate-400 font-medium text-[10px] md:text-sm uppercase tracking-widest mb-1 md:mb-2">Estimated Net Salary</p>
                         <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-2 md:mb-0">${netYearly.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h1>
-                        <p className="text-slate-400 text-xs md:text-base">Working <span className="text-white font-bold">{regularHours + overtimeHours} hrs</span> (w/ {overtimeHours} OT)</p>
+                        <p className="text-slate-400 text-xs md:text-base">Working <span className="text-white font-bold">{regularHours + overtimeHours} hrs</span></p>
                     </div>
                     <div className="relative w-24 h-24 md:w-32 md:h-32 flex-shrink-0">
                         <div className="w-full h-full rounded-full shadow-lg" style={{ background: `conic-gradient(#22c55e ${keepPercent}%, #ef4444 0)` }}></div>
@@ -146,39 +137,25 @@ export default async function SalaryPage({ params, searchParams }) {
                 </div>
             </div>
 
-            {/* AD SLOT 2: IN-CONTENT */}
-            <div className="ad-space w-full h-32 bg-slate-100 dark:bg-slate-800/50 rounded-xl flex items-center justify-center border border-slate-200 dark:border-slate-700 border-dashed"><span className="text-slate-400 font-bold text-xs uppercase tracking-widest">Ad Space (In-Content)</span></div>
-
             {/* SEO TEXT SECTION */}
             <div className="prose prose-slate dark:prose-invert max-w-none bg-white dark:bg-slate-800 p-6 md:p-8 rounded-3xl border border-slate-100 dark:border-slate-700">
-               <h2 className="text-xl font-bold mb-4">How much is ${hourlyRate} an hour in {stateName}?</h2>
-               <p>If you earn <strong>${hourlyRate} per hour</strong> in {stateName}, your annual salary before taxes is <strong>${grossYearly.toLocaleString()}</strong> (based on {regularHours} hours/week). However, your actual "take-home" pay will be approximately <strong>${netYearly.toLocaleString()}</strong> per year.</p>
-               <p>This means that for every hour you work, you actually keep about <strong>${effectiveHourly}</strong> after Federal, State, and FICA taxes. {stateInfo.taxRate === 0 ? ` Living in ${stateName} is beneficial because there is currently NO state income tax on wages.` : ` Be aware that ${stateName} charges a state income tax of roughly ${(stateInfo.taxRate * 100).toFixed(2)}%.`}</p>
-            </div>
-
-            {/* VISIBLE FAQ SECTION */}
-            <div className="space-y-4">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white">Frequently Asked Questions</h3>
-              <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700"><h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2">How much is ${hourlyRate} an hour annually?</h4><p className="text-sm text-slate-600 dark:text-slate-300">If you work a standard 40-hour week, making ${hourlyRate} an hour is equivalent to <strong>${grossYearly.toLocaleString()} per year</strong>.</p></div>
-              <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700"><h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2">What is the monthly take-home pay?</h4><p className="text-sm text-slate-600 dark:text-slate-300">In {stateName}, your estimated net monthly pay is <strong>${Math.floor(netMonthly).toLocaleString()}</strong> after all tax deductions.</p></div>
-              <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border border-slate-100 dark:border-slate-700"><h4 className="font-bold text-indigo-600 dark:text-indigo-400 mb-2">Does {stateName} have income tax?</h4><p className="text-sm text-slate-600 dark:text-slate-300">{stateInfo.taxRate === 0 ? `No, ${stateName} is one of the few states with 0% state income tax.` : `Yes, ${stateName} has a state income tax rate of approximately ${(stateInfo.taxRate * 100).toFixed(2)}%.`}</p></div>
+                <h2 className="text-xl font-bold mb-4">How much is ${hourlyRate} an hour in {stateName}?</h2>
+                <p>If you earn <strong>${hourlyRate} per hour</strong> in {stateName}, your annual salary before taxes is <strong>${grossYearly.toLocaleString()}</strong>. However, your actual take-home pay will be approximately <strong>${netYearly.toLocaleString()}</strong> per year.</p>
+                <p>This means for every hour you work, you keep about <strong>${effectiveHourly}</strong> after Federal, State, and FICA taxes. {stateInfo.taxRate === 0 ? ` Living in ${stateName} is beneficial because there is currently NO state income tax on wages.` : ` Be aware that ${stateName} charges a state income tax of roughly ${(stateInfo.taxRate * 100).toFixed(2)}%.`}</p>
             </div>
           </div>
 
           <div className="sidebar space-y-6">
             <div className="bg-white dark:bg-slate-800 p-5 md:p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700">
-               <h4 className="text-slate-900 dark:text-white text-base md:text-lg font-bold mb-4">Deductions</h4>
-               <div className="space-y-3 text-xs md:text-sm">
-                   <div className="flex justify-between items-center text-slate-600 dark:text-slate-400"><span>Federal Tax</span><span className="font-medium text-red-500">-${federalTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                   <div className="flex justify-between items-center text-slate-600 dark:text-slate-400"><span>State Tax ({stateInfo.code})</span><span className="font-medium text-red-500">-${stateTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                   <div className="flex justify-between items-center text-slate-600 dark:text-slate-400"><span>FICA Tax</span><span className="font-medium text-red-500">-${ficaTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                   {annualDeductions > 0 && (<div className="flex justify-between items-center text-indigo-600 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-900/20 p-2 rounded-lg mt-2"><span>Benefits</span><span className="font-bold">-${annualDeductions.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>)}
-                   <div className="h-px bg-slate-100 dark:bg-slate-700 my-2"></div>
-                   <div className="flex justify-between font-bold text-sm md:text-lg"><span className="text-slate-900 dark:text-white">Total Out</span><span className="text-red-600">-${(totalTax + annualDeductions).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-               </div>
+                <h4 className="text-slate-900 dark:text-white text-base md:text-lg font-bold mb-4">Deductions</h4>
+                <div className="space-y-3 text-xs md:text-sm">
+                    <div className="flex justify-between items-center text-slate-600 dark:text-slate-400"><span>Federal Tax</span><span className="font-medium text-red-500">-${federalTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                    <div className="flex justify-between items-center text-slate-600 dark:text-slate-400"><span>State Tax ({stateInfo.code})</span><span className="font-medium text-red-500">-${stateTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                    <div className="flex justify-between items-center text-slate-600 dark:text-slate-400"><span>FICA Tax</span><span className="font-medium text-red-500">-${ficaTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                    <div className="h-px bg-slate-100 dark:bg-slate-700 my-2"></div>
+                    <div className="flex justify-between font-bold text-sm md:text-lg"><span className="text-slate-900 dark:text-white">Total Out</span><span className="text-red-600">-${(totalTax + annualDeductions).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                </div>
             </div>
-            {/* AD SLOT 3: SIDEBAR (Sticky) */}
-            <div className="ad-space sticky top-24 w-full h-[600px] bg-slate-200 dark:bg-slate-800 rounded-xl flex items-center justify-center border border-slate-300 dark:border-slate-700 border-dashed"><span className="text-slate-400 font-bold text-sm uppercase tracking-widest transform -rotate-90">Ad Space (Vertical)</span></div>
           </div>
         </div>
       </div>
