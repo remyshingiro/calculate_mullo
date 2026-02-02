@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 // FIX: Added one extra '../' to reach the root data folder from /app/compare/
-// @ts-expect-error - ignoring type check
 import { stateTaxData } from '../../data/stateTaxData';
 
 export default function ComparePage() {
