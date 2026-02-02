@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+// Path reaches the root data folder from /app/
 import { stateTaxData } from '../data/stateTaxData';
 
 export default function Home() {
@@ -17,26 +18,22 @@ export default function Home() {
   const [overtime, setOvertime] = useState('0');
   const [deductions, setDeductions] = useState('0');
   const [status, setStatus] = useState('single');
-  const [isDetecting, setIsDetecting] = useState(true); // Loading state for location
+  const [isDetecting, setIsDetecting] = useState(true);
 
-  // --- AUTO-DETECT LOCATION (NEW) ---
+  // --- AUTO-DETECT LOCATION ---
   useEffect(() => {
     const detectLocation = async () => {
       try {
-        // 1. Fetch user data from free IP API
         const response = await fetch('https://ipapi.co/json/');
         const data = await response.json();
         
         if (data && data.region) {
-          const userRegion = data.region; // e.g., "California" or "New York"
+          const userRegion = data.region; 
           
-          // 2. Find the matching key in our stateTaxData
-          // We look for a state name that matches the API region
           const matchingKey = Object.keys(stateTaxData).find((key) => 
-            stateTaxData[key].name.toLowerCase() === userRegion.toLowerCase()
+            (stateTaxData as any)[key].name.toLowerCase() === userRegion.toLowerCase()
           );
 
-          // 3. Update the state if found
           if (matchingKey) {
             setSelectedState(matchingKey);
           }
@@ -54,22 +51,19 @@ export default function Home() {
   const handleCalculate = () => {
     let finalHourlyRate = amount;
 
-    // THE SMART CONVERSION LOGIC
     if (inputType === 'annual') {
       const annualSalary = parseFloat(amount);
       const weeklyHours = parseFloat(hours);
       if (annualSalary > 0 && weeklyHours > 0) {
-        // Formula: Salary / 52 Weeks / Hours Per Week
         finalHourlyRate = (annualSalary / 52 / weeklyHours).toFixed(2);
       }
     }
 
-    // Navigate to the existing result page
     router.push(`/salary/${selectedState}/${finalHourlyRate}?hours=${hours}&overtime=${overtime}&deductions=${deductions}&status=${status}`);
   };
 
   return (
-    <main className="min-h-screen font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900/50 text-slate-900 dark:text-white pb-20">
+    <main className="min-h-screen font-sans selection:bg-indigo-100 dark:selection:bg-indigo-900/50 text-slate-900 dark:text-white pb-20 relative">
       
       {/* Background Gradients */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -102,13 +96,13 @@ export default function Home() {
               ></div>
               <button 
                 onClick={() => { setInputType('hourly'); setAmount('25'); }}
-                className={`relative z-10 px-6 py-2 text-sm font-bold rounded-lg transition-colors ${inputType === 'hourly' ? 'text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                className={`relative z-10 px-6 py-2 text-sm font-bold rounded-lg transition-colors ${inputType === 'hourly' ? 'text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
               >
                 Hourly Wage
               </button>
               <button 
                 onClick={() => { setInputType('annual'); setAmount('55000'); }}
-                className={`relative z-10 px-6 py-2 text-sm font-bold rounded-lg transition-colors ${inputType === 'annual' ? 'text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+                className={`relative z-10 px-6 py-2 text-sm font-bold rounded-lg transition-colors ${inputType === 'annual' ? 'text-indigo-600 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}
               >
                 Annual Salary
               </button>
@@ -117,7 +111,6 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
             
-            {/* Input 1: Amount */}
             <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                 <div>
                     <label className="block text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">
@@ -130,18 +123,16 @@ export default function Home() {
                           value={amount}
                           onChange={(e) => setAmount(e.target.value)}
                           className="w-full pl-10 pr-4 py-3 md:py-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-xl font-bold text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 transition-all outline-none"
-                          placeholder={inputType === 'hourly' ? "25.00" : "65000"}
                         />
                     </div>
                 </div>
                 <div>
                     <label className="block text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2 flex justify-between">
                        <span>Location</span>
-                       {/* Subtle Location Badge */}
                        {isDetecting ? (
-                         <span className="text-indigo-500 animate-pulse">Locating...</span>
+                         <span className="text-indigo-500 animate-pulse text-[10px]">Locating...</span>
                        ) : (
-                         <span className="text-green-500">✓ Auto-detected</span>
+                         <span className="text-green-500 text-[10px]">✓ Auto-detected</span>
                        )}
                     </label>
                     <select 
@@ -149,15 +140,13 @@ export default function Home() {
                         onChange={(e) => setSelectedState(e.target.value)}
                         className="w-full px-4 py-3 md:py-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-lg font-semibold text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 transition-all outline-none cursor-pointer"
                     >
-                        {/* @ts-expect-error - ignoring js keys */}
                         {Object.keys(stateTaxData).map((key: string) => (
-                        <option key={key} value={key}>{stateTaxData[key].name}</option>
+                        <option key={key} value={key}>{(stateTaxData as any)[key].name}</option>
                         ))}
                     </select>
                 </div>
             </div>
 
-            {/* Row 2: Hours */}
             <div>
               <label className="block text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Regular Hours/Week</label>
               <input 
@@ -178,7 +167,6 @@ export default function Home() {
               />
             </div>
 
-            {/* Row 3: Deductions & Status */}
             <div>
               <label className="block text-xs md:text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-2">Monthly Benefits ($)</label>
               <div className="relative group">
@@ -188,7 +176,6 @@ export default function Home() {
                     value={deductions}
                     onChange={(e) => setDeductions(e.target.value)}
                     className="w-full pl-8 pr-4 py-3 md:py-4 bg-slate-50 dark:bg-slate-900 border-2 border-slate-200 dark:border-slate-700 rounded-xl text-lg font-semibold text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:border-indigo-500 transition-all outline-none"
-                    placeholder="0"
                 />
               </div>
             </div>
@@ -205,17 +192,15 @@ export default function Home() {
               </select>
             </div>
 
-            {/* Action Button */}
             <button 
               onClick={handleCalculate}
-              className="md:col-span-2 w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 text-white font-bold py-4 md:py-5 rounded-xl text-lg md:text-xl shadow-lg shadow-indigo-600/30 transition-all flex items-center justify-center gap-2 active:scale-[0.98] mt-2"
+              className="md:col-span-2 w-full bg-indigo-600 hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-400 text-white font-bold py-4 md:py-5 rounded-xl text-lg md:text-xl shadow-lg shadow-indigo-600/30 transition-all active:scale-[0.98] mt-2"
             >
               {inputType === 'hourly' ? 'Calculate Net Pay →' : 'Convert to Hourly & Calculate →'}
             </button>
           </div>
         </div>
         
-        {/* Quick Links Footer */}
         <div className="mt-16 text-center">
             <Link href="/states" className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline">
                 View all 50 State Tables

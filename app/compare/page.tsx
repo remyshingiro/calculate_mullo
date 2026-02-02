@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from 'react';
-// Path correctly reaches the root data folder from /app/compare/
 import { stateTaxData } from '../../data/stateTaxData';
 
 export default function ComparePage() {
@@ -10,7 +9,7 @@ export default function ComparePage() {
   const [stateB, setStateB] = useState('texas');
 
   const calculateNet = (salary: number, stateKey: string) => {
-    // FIX: Cast stateTaxData to 'any' or indexable type to prevent build errors
+    // FIX: Explicitly cast to prevent TypeScript indexing errors in production
     const stateInfo = (stateTaxData as any)[stateKey];
     
     if (!stateInfo) return 0;
@@ -29,7 +28,6 @@ export default function ComparePage() {
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-900 py-12 px-4">
       <div className="max-w-4xl mx-auto">
-        
         <h1 className="text-3xl md:text-5xl font-extrabold text-center text-slate-900 dark:text-white mb-8">
           State vs. State <span className="text-indigo-600">Payoff</span>
         </h1>
@@ -90,15 +88,6 @@ export default function ComparePage() {
               {difference > 0 ? '+' : ''}{Math.floor(difference).toLocaleString()} difference
             </p>
           </div>
-        </div>
-
-        <div className="mt-8 text-center p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl">
-            <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-300">
-              Moving to {(stateTaxData as any)[stateB]?.name} is {difference >= 0 ? 'Profitable!' : 'Costly!'}
-            </h3>
-            <p className="text-indigo-700 dark:text-indigo-400 mt-2">
-              You would {difference >= 0 ? 'keep' : 'lose'} an extra <strong>${Math.abs(Math.floor(difference)).toLocaleString()}</strong> per year in taxes.
-            </p>
         </div>
       </div>
     </main>
