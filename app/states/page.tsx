@@ -1,5 +1,5 @@
 import Link from 'next/link';
-// @ts-expect-error - ignoring type check
+// Ensure path reaches root data folder
 import { stateTaxData } from '../../data/stateTaxData';
 
 export const metadata = {
@@ -24,24 +24,28 @@ export default function StatesDirectory() {
 
         {/* The Grid of States */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {/* @ts-expect-error - ignoring js keys */}
-          {Object.keys(stateTaxData).map((key) => (
-            <Link 
-              key={key} 
-              href={`/salary/${key}/25`} // Defaulting to $25/hr as a starting point
-              className="group bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-indigo-500 dark:hover:border-indigo-500 transition-all flex items-center justify-between"
-            >
-              <div className="flex items-center gap-3">
-                {/* State Letter Circle */}
-                <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center text-sm">
-                  {stateTaxData[key].code}
+          {Object.keys(stateTaxData).map((key) => {
+            // FIX: Explicitly cast data to prevent indexing errors during build
+            const state = (stateTaxData as any)[key];
+            
+            return (
+              <Link 
+                key={key} 
+                href={`/salary/${key}/25`} 
+                className="group bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:border-indigo-500 dark:hover:border-indigo-500 transition-all flex items-center justify-between"
+              >
+                <div className="flex items-center gap-3">
+                  {/* State Letter Circle */}
+                  <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-slate-700 text-indigo-600 dark:text-indigo-400 font-bold flex items-center justify-center text-sm">
+                    {state.code}
+                  </div>
+                  <span className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-white transition-colors">
+                    {state.name}
+                  </span>
                 </div>
-                <span className="font-semibold text-slate-700 dark:text-slate-200 group-hover:text-indigo-600 dark:group-hover:text-white transition-colors">
-                  {stateTaxData[key].name}
-                </span>
-              </div>
-            </Link>
-          ))}
+              </Link>
+            );
+          })}
         </div>
 
       </div>
