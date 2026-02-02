@@ -24,10 +24,10 @@ export default function sitemap(): MetadataRoute.Sitemap {
   // This generates ~2,000+ links automatically
   const programmaticPages: MetadataRoute.Sitemap = [];
 
-  // @ts-expect-error - ignoring js keys
+  
   Object.keys(stateTaxData).forEach((stateKey) => {
     // For each state, we generate pages for common wages (e.g., $15, $20, $25...)
-    // @ts-expect-error - ignoring js types
+
     commonWages.forEach((wage) => {
       programmaticPages.push({
         url: `${baseUrl}/salary/${stateKey}/${wage}`,
