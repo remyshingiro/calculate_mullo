@@ -1,5 +1,4 @@
 import { MetadataRoute } from 'next';
-// @ts-expect-error - ignoring type check for js file
 import { stateTaxData, commonWages } from '../data/stateTaxData';
 
 export default function sitemap(): MetadataRoute.Sitemap {
