@@ -5,12 +5,14 @@ import { notFound } from 'next/navigation';
 import ShareButton from '../../../../components/ShareButton';
 import PrintButton from '../../../../components/PrintButton';
 
-// FIX: Corrected syntax for casting to prevent Turbopack parsing error
-const taxData = (stateTaxData as any);
+// FIX: In JavaScript files, we do not use 'as any'. 
+// The parser expects standard JS syntax.
+const taxData = stateTaxData;
 
-export async function generateMetadata({ params, searchParams }: { params: any, searchParams: any }) {
+export async function generateMetadata({ params, searchParams }) {
   const { state, amount } = await params;
   const resolvedSearchParams = await searchParams;
+  
   const hours = resolvedSearchParams?.hours || '40';
   const overtime = resolvedSearchParams?.overtime || '0';
   
@@ -24,7 +26,7 @@ export async function generateMetadata({ params, searchParams }: { params: any, 
   };
 }
 
-export default async function SalaryPage({ params, searchParams }: { params: any, searchParams: any }) {
+export default async function SalaryPage({ params, searchParams }) {
   const { state, amount } = await params;
   const resolvedSearchParams = await searchParams;
   
@@ -50,7 +52,7 @@ export default async function SalaryPage({ params, searchParams }: { params: any
   const taxableIncome = Math.max(0, grossYearly - annualDeductions); 
   const isMarried = status === 'married';
   
-  // USA Tax Logic
+  // USA Tax Logic for 2026
   const federalRate = isMarried ? 0.08 : 0.12; 
   const effectiveStateRate = isMarried ? (stateInfo.taxRate * 0.85) : stateInfo.taxRate; 
   const federalTax = taxableIncome * federalRate;
@@ -69,6 +71,7 @@ export default async function SalaryPage({ params, searchParams }: { params: any
   const effectiveHourly = (netWeekly / (regularHours + overtimeHours)).toFixed(2);
   const stateName = stateInfo.name;
 
+  // --- FAQ SCHEMA ---
   const faqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -82,11 +85,13 @@ export default async function SalaryPage({ params, searchParams }: { params: any
     <main className="min-h-screen bg-slate-50 dark:bg-slate-900 py-6 md:py-10 px-3 md:px-8 font-sans text-slate-900 dark:text-white">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
       <div className="max-w-6xl mx-auto">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+        
+        {/* Navigation Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 md:mb-8">
             <div className="flex items-center gap-3">
-                <a href="/" className="edit-inputs-link inline-flex items-center text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">
+                <a href="/" className="inline-flex items-center text-sm font-bold text-slate-500 hover:text-indigo-600 transition-colors">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4 mr-2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" /></svg>
-                    Edit
+                    Edit Inputs
                 </a>
                 <ShareButton />
                 <PrintButton />
@@ -103,6 +108,7 @@ export default async function SalaryPage({ params, searchParams }: { params: any
                     <div>
                         <p className="text-slate-400 font-medium text-sm uppercase tracking-widest mb-2">Estimated Net Salary</p>
                         <h1 className="text-5xl md:text-6xl font-bold">${netYearly.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h1>
+                        <p className="text-slate-400 text-xs md:text-base">Working <span className="text-white font-bold">{regularHours + overtimeHours} hrs</span></p>
                     </div>
                     <div className="relative w-32 h-32">
                         <div className="w-full h-full rounded-full" style={{ background: `conic-gradient(#22c55e ${keepPercent}%, #ef4444 0)` }}></div>
@@ -114,6 +120,7 @@ export default async function SalaryPage({ params, searchParams }: { params: any
             </div>
 
             <div className="bg-white dark:bg-slate-800 rounded-3xl shadow-lg border border-slate-100 dark:border-slate-700 overflow-hidden">
+                <div className="p-6 border-b border-slate-100 dark:border-slate-700 font-bold">Paycheck Breakdown</div>
                 <table className="w-full text-left">
                     <thead>
                         <tr className="bg-slate-50 dark:bg-slate-900/50 text-xs uppercase text-slate-500">
@@ -123,18 +130,26 @@ export default async function SalaryPage({ params, searchParams }: { params: any
                     <tbody className="text-sm font-medium divide-y divide-slate-100 dark:divide-slate-700">
                         <tr><td className="py-4 px-6">Weekly</td><td className="py-4 px-6 text-right">${Math.floor(grossWeekly).toLocaleString()}</td><td className="py-4 px-6 text-right text-red-500">-${Math.floor(totalTax / 52).toLocaleString()}</td><td className="py-4 px-6 text-right font-bold">${Math.floor(netWeekly).toLocaleString()}</td></tr>
                         <tr className="bg-indigo-50/30"><td className="py-4 px-6 font-bold">Monthly</td><td className="py-4 px-6 text-right">${Math.floor(grossMonthly).toLocaleString()}</td><td className="py-4 px-6 text-right text-red-500">-${Math.floor(totalTax / 12).toLocaleString()}</td><td className="py-4 px-6 text-right font-bold">${Math.floor(netMonthly).toLocaleString()}</td></tr>
+                        <tr><td className="py-4 px-6">Annually</td><td className="py-4 px-6 text-right">${Math.floor(grossYearly).toLocaleString()}</td><td className="py-4 px-6 text-right text-red-500">-${Math.floor(totalTax).toLocaleString()}</td><td className="py-4 px-6 text-right font-bold">${Math.floor(netYearly).toLocaleString()}</td></tr>
                     </tbody>
                 </table>
+            </div>
+
+            <div className="prose prose-slate dark:prose-invert max-w-none bg-white dark:bg-slate-800 p-8 rounded-3xl border border-slate-100 dark:border-slate-700">
+                <h2 className="text-xl font-bold mb-4">How much is ${hourlyRate} an hour in {stateName}?</h2>
+                <p>If you earn <strong>${hourlyRate} per hour</strong> in {stateName}, your annual salary is <strong>${grossYearly.toLocaleString()}</strong>. Your actual take-home pay will be approximately <strong>${netYearly.toLocaleString()}</strong> per year after all taxes.</p>
             </div>
           </div>
 
           <div className="sidebar space-y-6">
             <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700">
-                <h4 className="text-lg font-bold mb-4">Deductions</h4>
+                <h4 className="text-lg font-bold mb-4">Deductions Breakdown</h4>
                 <div className="space-y-3 text-sm">
                     <div className="flex justify-between"><span>Federal Tax</span><span className="text-red-500">-${federalTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                    <div className="flex justify-between"><span>State Tax</span><span className="text-red-500">-${stateTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
-                    <div className="flex justify-between font-bold border-t pt-2"><span>Total Out</span><span className="text-red-600">-${(totalTax + annualDeductions).toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                    <div className="flex justify-between"><span>State Tax ({stateInfo.code})</span><span className="text-red-500">-${stateTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                    <div className="flex justify-between"><span>FICA Tax</span><span className="text-red-500">-${ficaTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
+                    <div className="h-px bg-slate-100 dark:bg-slate-700 my-2"></div>
+                    <div className="flex justify-between font-bold text-lg"><span>Total Tax</span><span className="text-red-600">-${totalTax.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span></div>
                 </div>
             </div>
           </div>
