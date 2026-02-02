@@ -1,27 +1,26 @@
 "use client";
 
 import { useState } from 'react';
-// FIX: Added one extra '../' to reach the root data folder from /app/compare/
+// Path correctly reaches the root data folder from /app/compare/
 import { stateTaxData } from '../../data/stateTaxData';
 
 export default function ComparePage() {
-  const [amount, setAmount] = useState('50000'); // Annual Salary
+  const [amount, setAmount] = useState('50000'); 
   const [stateA, setStateA] = useState('california');
   const [stateB, setStateB] = useState('texas');
 
-  // Math Helper
   const calculateNet = (salary: number, stateKey: string) => {
-    // Safety check: ensure the state exists in your data object
-    const stateInfo = stateTaxData[stateKey];
+    // FIX: Cast stateTaxData to 'any' or indexable type to prevent build errors
+    const stateInfo = (stateTaxData as any)[stateKey];
+    
     if (!stateInfo) return 0;
 
-    const federalTax = salary * 0.12; // Simplified logic for demo
+    const federalTax = salary * 0.12; 
     const ficaTax = salary * 0.0765;
     const stateTax = salary * (stateInfo.taxRate || 0);
     return salary - federalTax - ficaTax - stateTax;
   };
 
-  // Ensure 'amount' is a valid number to prevent "NaN" errors
   const salaryNum = parseFloat(amount) || 0;
   const netA = calculateNet(salaryNum, stateA);
   const netB = calculateNet(salaryNum, stateB);
@@ -35,7 +34,6 @@ export default function ComparePage() {
           State vs. State <span className="text-indigo-600">Payoff</span>
         </h1>
 
-        {/* INPUTS */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg mb-8">
           <div className="grid md:grid-cols-3 gap-4 items-end">
             <div>
@@ -54,8 +52,9 @@ export default function ComparePage() {
                 onChange={(e) => setStateA(e.target.value)}
                 className="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:text-white"
               >
-                {/* @ts-expect-error - ignoring types */}
-                {Object.keys(stateTaxData).map(k => <option key={k} value={k}>{stateTaxData[k].name}</option>)}
+                {Object.keys(stateTaxData).map(k => (
+                  <option key={k} value={k}>{(stateTaxData as any)[k].name}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -65,28 +64,25 @@ export default function ComparePage() {
                 onChange={(e) => setStateB(e.target.value)}
                 className="w-full p-3 border rounded-xl bg-slate-50 dark:bg-slate-900 dark:text-white"
               >
-                 {/* @ts-expect-error - ignoring types */}
-                {Object.keys(stateTaxData).map(k => <option key={k} value={k}>{stateTaxData[k].name}</option>)}
+                {Object.keys(stateTaxData).map(k => (
+                  <option key={k} value={k}>{(stateTaxData as any)[k].name}</option>
+                ))}
               </select>
             </div>
           </div>
         </div>
 
-        {/* RESULTS SPLIT */}
         <div className="grid md:grid-cols-2 gap-4">
-          
-          {/* STATE A */}
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl border-2 border-slate-100 dark:border-slate-700">
-            <h2 className="text-xl font-bold text-slate-500 mb-2">{stateTaxData[stateA]?.name}</h2>
+            <h2 className="text-xl font-bold text-slate-500 mb-2">{(stateTaxData as any)[stateA]?.name}</h2>
             <div className="text-3xl font-black text-slate-900 dark:text-white">
               ${Math.floor(netA).toLocaleString()}
             </div>
             <p className="text-sm text-slate-400">Net Pay / Year</p>
           </div>
 
-          {/* STATE B */}
           <div className={`bg-white dark:bg-slate-800 p-6 rounded-2xl border-2 ${difference > 0 ? 'border-green-500' : 'border-red-500'}`}>
-            <h2 className="text-xl font-bold text-slate-500 mb-2">{stateTaxData[stateB]?.name}</h2>
+            <h2 className="text-xl font-bold text-slate-500 mb-2">{(stateTaxData as any)[stateB]?.name}</h2>
             <div className="text-3xl font-black text-slate-900 dark:text-white">
               ${Math.floor(netB).toLocaleString()}
             </div>
@@ -94,19 +90,16 @@ export default function ComparePage() {
               {difference > 0 ? '+' : ''}{Math.floor(difference).toLocaleString()} difference
             </p>
           </div>
-
         </div>
 
-        {/* SUMMARY */}
         <div className="mt-8 text-center p-6 bg-indigo-50 dark:bg-indigo-900/20 rounded-2xl">
             <h3 className="text-xl font-bold text-indigo-900 dark:text-indigo-300">
-              Moving to {stateTaxData[stateB]?.name} is {difference >= 0 ? 'Profitable!' : 'Costly!'}
+              Moving to {(stateTaxData as any)[stateB]?.name} is {difference >= 0 ? 'Profitable!' : 'Costly!'}
             </h3>
             <p className="text-indigo-700 dark:text-indigo-400 mt-2">
               You would {difference >= 0 ? 'keep' : 'lose'} an extra <strong>${Math.abs(Math.floor(difference)).toLocaleString()}</strong> per year in taxes.
             </p>
         </div>
-
       </div>
     </main>
   );
